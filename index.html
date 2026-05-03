@@ -1,0 +1,958 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Diagnóstico do Cardápio — Sanidade Técnica</title>
+<link href="https://fonts.googleapis.com/css2?family=Fraunces:ital,wght@0,300;0,400;0,700;0,900;1,400;1,700&family=DM+Sans:wght@300;400;500;600&family=DM+Mono:wght@400;500&display=swap" rel="stylesheet">
+<style>
+  :root {
+    --preto: #0d0d0d;
+    --preto-medio: #1a1a1a;
+    --laranja: #E8622A;
+    --laranja-claro: #F2855A;
+    --laranja-escuro: #C04E1A;
+    --creme: #F5F0E8;
+    --creme-escuro: #EBE4D6;
+    --branco: #ffffff;
+    --cinza: #5a5a5a;
+    --verde: #2A7A4B;
+    --vermelho: #C0392B;
+    --amarelo: #D97706;
+  }
+
+  * { margin: 0; padding: 0; box-sizing: border-box; }
+
+  body {
+    font-family: 'DM Sans', sans-serif;
+    background: var(--preto);
+    color: var(--branco);
+    min-height: 100vh;
+    overflow-x: hidden;
+  }
+
+  /* ===== BG ANIMADO ===== */
+  .bg-orbs {
+    position: fixed;
+    inset: 0;
+    pointer-events: none;
+    z-index: 0;
+    overflow: hidden;
+  }
+
+  .orb {
+    position: absolute;
+    border-radius: 50%;
+    filter: blur(80px);
+    animation: float 8s ease-in-out infinite;
+  }
+
+  .orb-1 {
+    width: 400px; height: 400px;
+    background: rgba(232,98,42,0.12);
+    top: -100px; right: -100px;
+    animation-delay: 0s;
+  }
+
+  .orb-2 {
+    width: 300px; height: 300px;
+    background: rgba(232,98,42,0.07);
+    bottom: 100px; left: -80px;
+    animation-delay: 3s;
+  }
+
+  @keyframes float {
+    0%, 100% { transform: translateY(0px) scale(1); }
+    50% { transform: translateY(-30px) scale(1.05); }
+  }
+
+  /* ===== CONTAINER ===== */
+  .container {
+    max-width: 680px;
+    margin: 0 auto;
+    padding: 0 24px;
+    position: relative;
+    z-index: 1;
+  }
+
+  /* ===== TELAS ===== */
+  .tela {
+    display: none;
+    min-height: 100vh;
+    padding: 60px 0;
+  }
+
+  .tela.ativa {
+    display: flex;
+    flex-direction: column;
+    justify-content: center;
+  }
+
+  /* ===== TELA INTRO ===== */
+  .intro-marca {
+    font-family: 'DM Mono', monospace;
+    font-size: 11px;
+    letter-spacing: 3px;
+    text-transform: uppercase;
+    color: var(--laranja);
+    margin-bottom: 40px;
+    display: flex;
+    align-items: center;
+    gap: 10px;
+  }
+
+  .intro-marca::before {
+    content: '';
+    width: 30px;
+    height: 1px;
+    background: var(--laranja);
+  }
+
+  .intro-titulo {
+    font-family: 'Fraunces', serif;
+    font-size: clamp(42px, 8vw, 68px);
+    font-weight: 900;
+    line-height: 1.0;
+    margin-bottom: 20px;
+  }
+
+  .intro-titulo .destaque {
+    color: var(--laranja);
+    font-style: italic;
+  }
+
+  .intro-sub {
+    font-size: 17px;
+    color: rgba(255,255,255,0.5);
+    font-weight: 300;
+    line-height: 1.7;
+    margin-bottom: 48px;
+    max-width: 520px;
+  }
+
+  .intro-promises {
+    display: flex;
+    flex-direction: column;
+    gap: 12px;
+    margin-bottom: 52px;
+  }
+
+  .promise {
+    display: flex;
+    align-items: center;
+    gap: 14px;
+    color: rgba(255,255,255,0.7);
+    font-size: 15px;
+  }
+
+  .promise-icon {
+    width: 28px;
+    height: 28px;
+    background: rgba(232,98,42,0.15);
+    border: 1px solid rgba(232,98,42,0.3);
+    border-radius: 50%;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 13px;
+    flex-shrink: 0;
+  }
+
+  .btn-start {
+    display: inline-flex;
+    align-items: center;
+    gap: 12px;
+    background: var(--laranja);
+    color: white;
+    border: none;
+    padding: 18px 36px;
+    font-family: 'DM Sans', sans-serif;
+    font-size: 16px;
+    font-weight: 600;
+    border-radius: 4px;
+    cursor: pointer;
+    transition: all 0.2s;
+    align-self: flex-start;
+  }
+
+  .btn-start:hover {
+    background: var(--laranja-claro);
+    transform: translateY(-2px);
+    box-shadow: 0 8px 24px rgba(232,98,42,0.3);
+  }
+
+  .intro-gratuito {
+    margin-top: 16px;
+    font-size: 12px;
+    color: rgba(255,255,255,0.25);
+    font-family: 'DM Mono', monospace;
+    letter-spacing: 1px;
+  }
+
+  /* ===== TELA QUIZ ===== */
+  .quiz-header {
+    margin-bottom: 48px;
+  }
+
+  .quiz-progresso-wrap {
+    display: flex;
+    align-items: center;
+    gap: 14px;
+    margin-bottom: 32px;
+  }
+
+  .quiz-progresso-bar {
+    flex: 1;
+    height: 3px;
+    background: rgba(255,255,255,0.08);
+    border-radius: 2px;
+    overflow: hidden;
+  }
+
+  .quiz-progresso-fill {
+    height: 100%;
+    background: var(--laranja);
+    border-radius: 2px;
+    transition: width 0.4s ease;
+  }
+
+  .quiz-num {
+    font-family: 'DM Mono', monospace;
+    font-size: 11px;
+    color: rgba(255,255,255,0.3);
+    letter-spacing: 1px;
+    flex-shrink: 0;
+  }
+
+  .quiz-categoria {
+    font-family: 'DM Mono', monospace;
+    font-size: 10px;
+    letter-spacing: 3px;
+    text-transform: uppercase;
+    color: var(--laranja);
+    margin-bottom: 14px;
+    opacity: 0.8;
+  }
+
+  .quiz-pergunta {
+    font-family: 'Fraunces', serif;
+    font-size: clamp(22px, 5vw, 32px);
+    font-weight: 700;
+    line-height: 1.3;
+    color: var(--branco);
+  }
+
+  .quiz-dica {
+    margin-top: 12px;
+    font-size: 13px;
+    color: rgba(255,255,255,0.35);
+    font-style: italic;
+  }
+
+  .quiz-opcoes {
+    display: flex;
+    flex-direction: column;
+    gap: 10px;
+    margin-top: 36px;
+  }
+
+  .opcao {
+    background: rgba(255,255,255,0.04);
+    border: 1px solid rgba(255,255,255,0.08);
+    border-radius: 8px;
+    padding: 18px 22px;
+    cursor: pointer;
+    transition: all 0.2s;
+    display: flex;
+    align-items: center;
+    gap: 16px;
+    text-align: left;
+  }
+
+  .opcao:hover {
+    background: rgba(232,98,42,0.08);
+    border-color: rgba(232,98,42,0.3);
+    transform: translateX(4px);
+  }
+
+  .opcao.selecionada {
+    background: rgba(232,98,42,0.15);
+    border-color: var(--laranja);
+  }
+
+  .opcao-letra {
+    width: 32px;
+    height: 32px;
+    border-radius: 50%;
+    border: 1px solid rgba(255,255,255,0.15);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-family: 'DM Mono', monospace;
+    font-size: 12px;
+    color: rgba(255,255,255,0.4);
+    flex-shrink: 0;
+    transition: all 0.2s;
+  }
+
+  .opcao.selecionada .opcao-letra {
+    background: var(--laranja);
+    border-color: var(--laranja);
+    color: white;
+  }
+
+  .opcao-texto {
+    font-size: 15px;
+    color: rgba(255,255,255,0.75);
+    line-height: 1.4;
+    flex: 1;
+  }
+
+  .opcao.selecionada .opcao-texto { color: white; }
+
+  .opcao-pontos {
+    font-family: 'DM Mono', monospace;
+    font-size: 10px;
+    color: rgba(255,255,255,0.2);
+  }
+
+  .quiz-nav {
+    display: flex;
+    justify-content: flex-end;
+    margin-top: 36px;
+  }
+
+  .btn-proximo {
+    background: var(--laranja);
+    color: white;
+    border: none;
+    padding: 14px 28px;
+    font-family: 'DM Sans', sans-serif;
+    font-size: 15px;
+    font-weight: 600;
+    border-radius: 4px;
+    cursor: pointer;
+    transition: all 0.2s;
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    opacity: 0;
+    pointer-events: none;
+    transform: translateY(8px);
+  }
+
+  .btn-proximo.visivel {
+    opacity: 1;
+    pointer-events: all;
+    transform: translateY(0);
+    transition: opacity 0.3s, transform 0.3s, background 0.2s;
+  }
+
+  .btn-proximo:hover { background: var(--laranja-claro); }
+
+  /* ===== TELA RESULTADO ===== */
+  .resultado-wrap {
+    animation: fadeIn 0.6s ease;
+  }
+
+  @keyframes fadeIn {
+    from { opacity: 0; transform: translateY(20px); }
+    to { opacity: 1; transform: translateY(0); }
+  }
+
+  .resultado-label {
+    font-family: 'DM Mono', monospace;
+    font-size: 10px;
+    letter-spacing: 3px;
+    text-transform: uppercase;
+    color: var(--laranja);
+    margin-bottom: 20px;
+  }
+
+  .resultado-score-wrap {
+    display: flex;
+    align-items: center;
+    gap: 24px;
+    margin-bottom: 32px;
+  }
+
+  .resultado-score-circulo {
+    width: 100px;
+    height: 100px;
+    border-radius: 50%;
+    border: 3px solid var(--laranja);
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    flex-shrink: 0;
+    background: rgba(232,98,42,0.08);
+  }
+
+  .resultado-score-num {
+    font-family: 'Fraunces', serif;
+    font-size: 36px;
+    font-weight: 900;
+    color: var(--laranja);
+    line-height: 1;
+  }
+
+  .resultado-score-max {
+    font-size: 11px;
+    color: rgba(255,255,255,0.3);
+    font-family: 'DM Mono', monospace;
+  }
+
+  .resultado-nivel-nome {
+    font-family: 'Fraunces', serif;
+    font-size: clamp(28px, 6vw, 42px);
+    font-weight: 900;
+    line-height: 1.1;
+  }
+
+  .resultado-nivel-desc {
+    font-size: 14px;
+    color: rgba(255,255,255,0.45);
+    margin-top: 6px;
+  }
+
+  .resultado-barra-wrap {
+    margin: 28px 0;
+  }
+
+  .resultado-barra-label {
+    display: flex;
+    justify-content: space-between;
+    font-size: 12px;
+    color: rgba(255,255,255,0.3);
+    font-family: 'DM Mono', monospace;
+    margin-bottom: 8px;
+  }
+
+  .resultado-barra {
+    height: 8px;
+    background: rgba(255,255,255,0.06);
+    border-radius: 4px;
+    overflow: hidden;
+  }
+
+  .resultado-barra-fill {
+    height: 100%;
+    border-radius: 4px;
+    transition: width 1s ease;
+  }
+
+  .resultado-analise {
+    background: rgba(255,255,255,0.03);
+    border: 1px solid rgba(255,255,255,0.07);
+    border-radius: 10px;
+    padding: 28px;
+    margin: 28px 0;
+  }
+
+  .resultado-analise-titulo {
+    font-family: 'DM Mono', monospace;
+    font-size: 10px;
+    letter-spacing: 2px;
+    text-transform: uppercase;
+    color: rgba(255,255,255,0.35);
+    margin-bottom: 16px;
+  }
+
+  .resultado-item {
+    display: flex;
+    align-items: flex-start;
+    gap: 12px;
+    padding: 12px 0;
+    border-bottom: 1px solid rgba(255,255,255,0.05);
+    font-size: 14px;
+    color: rgba(255,255,255,0.7);
+    line-height: 1.5;
+  }
+
+  .resultado-item:last-child { border-bottom: none; }
+
+  .resultado-item-icone { flex-shrink: 0; font-size: 16px; margin-top: 1px; }
+
+  /* ===== CTA RESULTADO ===== */
+  .resultado-cta {
+    background: linear-gradient(135deg, #1a0a00, #2d1200);
+    border: 1px solid rgba(232,98,42,0.25);
+    border-radius: 12px;
+    padding: 32px;
+    margin-top: 32px;
+  }
+
+  .cta-urgencia {
+    font-family: 'DM Mono', monospace;
+    font-size: 10px;
+    letter-spacing: 2px;
+    text-transform: uppercase;
+    color: var(--laranja);
+    margin-bottom: 12px;
+  }
+
+  .cta-titulo {
+    font-family: 'Fraunces', serif;
+    font-size: 24px;
+    font-weight: 700;
+    color: white;
+    margin-bottom: 12px;
+    line-height: 1.3;
+  }
+
+  .cta-desc {
+    font-size: 14px;
+    color: rgba(255,255,255,0.55);
+    margin-bottom: 24px;
+    line-height: 1.6;
+  }
+
+  .cta-itens {
+    display: flex;
+    flex-direction: column;
+    gap: 8px;
+    margin-bottom: 24px;
+  }
+
+  .cta-item {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    font-size: 13px;
+    color: rgba(255,255,255,0.65);
+  }
+
+  .cta-item::before {
+    content: '✓';
+    color: var(--laranja);
+    font-weight: 700;
+    flex-shrink: 0;
+  }
+
+  .btn-cta {
+    width: 100%;
+    background: var(--laranja);
+    color: white;
+    border: none;
+    padding: 18px;
+    font-family: 'DM Sans', sans-serif;
+    font-size: 16px;
+    font-weight: 700;
+    border-radius: 6px;
+    cursor: pointer;
+    transition: all 0.2s;
+    letter-spacing: 0.3px;
+  }
+
+  .btn-cta:hover {
+    background: var(--laranja-claro);
+    transform: translateY(-2px);
+    box-shadow: 0 8px 28px rgba(232,98,42,0.35);
+  }
+
+  .cta-garantia {
+    text-align: center;
+    margin-top: 12px;
+    font-size: 12px;
+    color: rgba(255,255,255,0.2);
+    font-family: 'DM Mono', monospace;
+  }
+
+  /* ===== RODAPÉ ===== */
+  .rodape-quiz {
+    text-align: center;
+    padding: 24px 0;
+    font-family: 'DM Mono', monospace;
+    font-size: 10px;
+    color: rgba(255,255,255,0.15);
+    letter-spacing: 2px;
+    text-transform: uppercase;
+    position: relative;
+    z-index: 1;
+  }
+
+  /* ===== TRANSIÇÃO ===== */
+  .tela { transition: opacity 0.3s ease; }
+</style>
+</head>
+<body>
+
+<div class="bg-orbs">
+  <div class="orb orb-1"></div>
+  <div class="orb orb-2"></div>
+</div>
+
+<!-- ===== TELA 1: INTRO ===== -->
+<div class="tela ativa" id="tela-intro">
+  <div class="container">
+    <div class="intro-marca">Sanidade Técnica · Grátis</div>
+
+    <h1 class="intro-titulo">
+      Seu cardápio está<br>
+      <span class="destaque">te custando</span><br>
+      dinheiro?
+    </h1>
+
+    <p class="intro-sub">
+      Responda 10 perguntas rápidas e descubra exatamente onde seu cardápio está deixando lucro na mesa — e o que fazer agora.
+    </p>
+
+    <div class="intro-promises">
+      <div class="promise">
+        <div class="promise-icon">⏱</div>
+        <span>Leva menos de 3 minutos</span>
+      </div>
+      <div class="promise">
+        <div class="promise-icon">🎯</div>
+        <span>Diagnóstico real com ações concretas</span>
+      </div>
+      <div class="promise">
+        <div class="promise-icon">💡</div>
+        <span>Funciona para qualquer tipo de estabelecimento</span>
+      </div>
+    </div>
+
+    <button class="btn-start" onclick="iniciarQuiz()">
+      Fazer o diagnóstico gratuito →
+    </button>
+    <div class="intro-gratuito">100% gratuito · sem cadastro necessário</div>
+  </div>
+</div>
+
+<!-- ===== TELA 2: QUIZ ===== -->
+<div class="tela" id="tela-quiz">
+  <div class="container">
+    <div class="quiz-header">
+      <div class="quiz-progresso-wrap">
+        <div class="quiz-progresso-bar">
+          <div class="quiz-progresso-fill" id="barra-progresso" style="width:0%"></div>
+        </div>
+        <div class="quiz-num" id="contador-pergunta">1 / 10</div>
+      </div>
+      <div class="quiz-categoria" id="quiz-categoria"></div>
+      <div class="quiz-pergunta" id="quiz-pergunta"></div>
+      <div class="quiz-dica" id="quiz-dica"></div>
+    </div>
+
+    <div class="quiz-opcoes" id="quiz-opcoes"></div>
+
+    <div class="quiz-nav">
+      <button class="btn-proximo" id="btn-proximo" onclick="proximaPergunta()">
+        Próxima →
+      </button>
+    </div>
+  </div>
+</div>
+
+<!-- ===== TELA 3: RESULTADO ===== -->
+<div class="tela" id="tela-resultado">
+  <div class="container">
+    <div class="resultado-wrap">
+      <div class="resultado-label">Seu diagnóstico está pronto</div>
+
+      <div class="resultado-score-wrap">
+        <div class="resultado-score-circulo">
+          <div class="resultado-score-num" id="res-score">0</div>
+          <div class="resultado-score-max">/ 30</div>
+        </div>
+        <div>
+          <div class="resultado-nivel-nome" id="res-nivel-nome"></div>
+          <div class="resultado-nivel-desc" id="res-nivel-desc"></div>
+        </div>
+      </div>
+
+      <div class="resultado-barra-wrap">
+        <div class="resultado-barra-label">
+          <span>Potencial de melhoria</span>
+          <span id="res-pct">0%</span>
+        </div>
+        <div class="resultado-barra">
+          <div class="resultado-barra-fill" id="res-barra" style="width:0%"></div>
+        </div>
+      </div>
+
+      <div class="resultado-analise">
+        <div class="resultado-analise-titulo">O que o seu diagnóstico revelou</div>
+        <div id="res-itens"></div>
+      </div>
+
+      <div class="resultado-cta">
+        <div class="cta-urgencia">Próximo passo recomendado</div>
+        <div class="cta-titulo" id="cta-titulo"></div>
+        <div class="cta-desc" id="cta-desc"></div>
+        <div class="cta-itens" id="cta-itens"></div>
+        <button class="btn-cta" onclick="window.open('https://sanidadetecnica-coder.github.io/cardapio-lucrativo', '_blank')">
+          Quero o Kit Cardápio Lucrativo completo →
+        </button>
+        <div class="cta-garantia">acesso imediato após o pagamento</div>
+      </div>
+
+      <div style="margin-top:24px;text-align:center;">
+        <button onclick="reiniciar()" style="background:none;border:1px solid rgba(255,255,255,0.1);color:rgba(255,255,255,0.3);padding:10px 20px;border-radius:4px;cursor:pointer;font-family:'DM Mono',monospace;font-size:11px;letter-spacing:1px;">
+          Refazer o diagnóstico
+        </button>
+      </div>
+    </div>
+  </div>
+</div>
+
+<div class="rodape-quiz">Sanidade Técnica · @sanidadetecnica · Diagnóstico gratuito</div>
+
+<script>
+const perguntas = [
+  {
+    categoria: "Dados e Controle",
+    pergunta: "Você sabe exatamente quantas unidades de cada prato vendeu no último mês?",
+    dica: "Não precisa ser exato — você tem uma noção clara por item.",
+    opcoes: [
+      { letra: "A", texto: "Sim, tenho registro separado por item", pontos: 3 },
+      { letra: "B", texto: "Sei aproximadamente, mas não fica registrado", pontos: 1 },
+      { letra: "C", texto: "Não, sei só o faturamento total", pontos: 0 }
+    ]
+  },
+  {
+    categoria: "Dados e Controle",
+    pergunta: "Você sabe o custo de ingredientes de cada prato do seu cardápio?",
+    dica: "Custo de ingredientes = quanto você gasta para produzir uma porção.",
+    opcoes: [
+      { letra: "A", texto: "Sim, tenho ficha técnica de todos os pratos", pontos: 3 },
+      { letra: "B", texto: "Sei de alguns pratos, mas não de todos", pontos: 1 },
+      { letra: "C", texto: "Não calculo isso — preciso começar", pontos: 0 }
+    ]
+  },
+  {
+    categoria: "Precificação",
+    pergunta: "Como você definiu os preços do seu cardápio?",
+    dica: "Seja honesto — a maioria dos estabelecimentos usa o método do 'olhômetro'.",
+    opcoes: [
+      { letra: "A", texto: "Calculei custo + margem desejada para cada prato", pontos: 3 },
+      { letra: "B", texto: "Olhei o que a concorrência cobra e cobrei parecido", pontos: 1 },
+      { letra: "C", texto: "Defini por intuição — não tenho metodologia", pontos: 0 }
+    ]
+  },
+  {
+    categoria: "Precificação",
+    pergunta: "Você sabe qual é o prato mais lucrativo do seu cardápio hoje?",
+    dica: "Mais lucrativo = maior margem de lucro em reais, não o mais caro.",
+    opcoes: [
+      { letra: "A", texto: "Sim, sei exatamente qual é e por quê", pontos: 3 },
+      { letra: "B", texto: "Tenho um palpite, mas não confirmei nos números", pontos: 1 },
+      { letra: "C", texto: "Não faço ideia — nunca analisei isso", pontos: 0 }
+    ]
+  },
+  {
+    categoria: "Cardápio e Estratégia",
+    pergunta: "Você já identificou algum prato que vende muito mas provavelmente lucra pouco?",
+    dica: "Esse é o 'Cavalo' da Engenharia de Cardápio — muito popular, margem baixa.",
+    opcoes: [
+      { letra: "A", texto: "Sim, e já tomei alguma ação para resolver", pontos: 3 },
+      { letra: "B", texto: "Suspeito de alguns pratos mas nunca confirmei", pontos: 1 },
+      { letra: "C", texto: "Nunca pensei nisso — não sabia que isso existia", pontos: 0 }
+    ]
+  },
+  {
+    categoria: "Cardápio e Estratégia",
+    pergunta: "O layout do seu cardápio foi pensado para guiar o cliente aos pratos mais lucrativos?",
+    dica: "Posição, destaque visual, fotos e descrições influenciam o que o cliente escolhe.",
+    opcoes: [
+      { letra: "A", texto: "Sim, organizei estrategicamente com esse objetivo", pontos: 3 },
+      { letra: "B", texto: "Não, organizei por categoria ou preferência pessoal", pontos: 1 },
+      { letra: "C", texto: "Nunca pensei que o cardápio pudesse influenciar isso", pontos: 0 }
+    ]
+  },
+  {
+    categoria: "Operação",
+    pergunta: "Você tem algum prato no cardápio que vende pouco E você sabe que lucra mal?",
+    dica: "Esse é o 'Cão' — ocupa espaço, confunde o cliente e não retorna resultado.",
+    opcoes: [
+      { letra: "A", texto: "Não — já eliminei ou reformulei esses pratos", pontos: 3 },
+      { letra: "B", texto: "Tenho, mas mantenho por hábito ou pressão de clientes antigos", pontos: 1 },
+      { letra: "C", texto: "Tenho vários — meu cardápio está inchado", pontos: 0 }
+    ]
+  },
+  {
+    categoria: "Operação",
+    pergunta: "Sua equipe de salão sabe quais pratos recomendar quando o cliente pede sugestão?",
+    dica: "A equipe bem treinada é o vendedor mais poderoso que você tem.",
+    opcoes: [
+      { letra: "A", texto: "Sim, são treinados para sugerir os pratos certos", pontos: 3 },
+      { letra: "B", texto: "Sugerem o que eles gostam — sem critério estratégico", pontos: 1 },
+      { letra: "C", texto: "Não temos esse hábito de sugerir pratos", pontos: 0 }
+    ]
+  },
+  {
+    categoria: "Evolução",
+    pergunta: "Com que frequência você analisa o desempenho do seu cardápio?",
+    dica: "Não estamos falando de faturamento — mas do desempenho de cada item.",
+    opcoes: [
+      { letra: "A", texto: "Regularmente — faço isso ao menos a cada 6 meses", pontos: 3 },
+      { letra: "B", texto: "Raramente — só quando algo me preocupa muito", pontos: 1 },
+      { letra: "C", texto: "Nunca fiz uma análise estruturada do cardápio", pontos: 0 }
+    ]
+  },
+  {
+    categoria: "Evolução",
+    pergunta: "Se você pudesse mudar uma coisa no seu cardápio hoje para lucrar mais, você saberia qual seria?",
+    dica: "Essa pergunta mede se você tem clareza estratégica sobre o seu negócio.",
+    opcoes: [
+      { letra: "A", texto: "Sim, já identifiquei o ponto crítico e tenho um plano", pontos: 3 },
+      { letra: "B", texto: "Tenho algumas ideias, mas sem certeza por onde começar", pontos: 1 },
+      { letra: "C", texto: "Não — é exatamente isso que estou tentando descobrir", pontos: 0 }
+    ]
+  }
+];
+
+let perguntaAtual = 0;
+let pontuacao = 0;
+let respostas = [];
+
+function irParaTela(id) {
+  document.querySelectorAll('.tela').forEach(t => t.classList.remove('ativa'));
+  document.getElementById(id).classList.add('ativa');
+  window.scrollTo({ top: 0, behavior: 'smooth' });
+}
+
+function iniciarQuiz() {
+  perguntaAtual = 0;
+  pontuacao = 0;
+  respostas = [];
+  renderPergunta();
+  irParaTela('tela-quiz');
+}
+
+function renderPergunta() {
+  const p = perguntas[perguntaAtual];
+  const total = perguntas.length;
+  const pct = ((perguntaAtual) / total) * 100;
+
+  document.getElementById('barra-progresso').style.width = pct + '%';
+  document.getElementById('contador-pergunta').textContent = (perguntaAtual + 1) + ' / ' + total;
+  document.getElementById('quiz-categoria').textContent = p.categoria;
+  document.getElementById('quiz-pergunta').textContent = p.pergunta;
+  document.getElementById('quiz-dica').textContent = p.dica;
+
+  const opcoesEl = document.getElementById('quiz-opcoes');
+  opcoesEl.innerHTML = '';
+
+  p.opcoes.forEach((op, i) => {
+    const div = document.createElement('div');
+    div.className = 'opcao';
+    div.innerHTML = `
+      <div class="opcao-letra">${op.letra}</div>
+      <div class="opcao-texto">${op.texto}</div>
+    `;
+    div.onclick = () => selecionarOpcao(i, op.pontos, div);
+    opcoesEl.appendChild(div);
+  });
+
+  const btn = document.getElementById('btn-proximo');
+  btn.classList.remove('visivel');
+  btn.textContent = perguntaAtual === total - 1 ? 'Ver resultado →' : 'Próxima →';
+}
+
+function selecionarOpcao(index, pontos, el) {
+  document.querySelectorAll('.opcao').forEach(o => o.classList.remove('selecionada'));
+  el.classList.add('selecionada');
+  respostas[perguntaAtual] = pontos;
+  document.getElementById('btn-proximo').classList.add('visivel');
+}
+
+function proximaPergunta() {
+  if (respostas[perguntaAtual] === undefined) return;
+  pontuacao += respostas[perguntaAtual];
+  perguntaAtual++;
+
+  if (perguntaAtual >= perguntas.length) {
+    mostrarResultado();
+  } else {
+    renderPergunta();
+  }
+}
+
+function mostrarResultado() {
+  irParaTela('tela-resultado');
+
+  const score = pontuacao;
+  const max = 30;
+  const pct = Math.round((score / max) * 100);
+
+  document.getElementById('res-score').textContent = score;
+  document.getElementById('res-pct').textContent = (100 - pct) + '% de potencial não explorado';
+
+  setTimeout(() => {
+    document.getElementById('res-barra').style.width = (100 - pct) + '%';
+  }, 300);
+
+  let nivel, nivelDesc, cor, itens, ctaTitulo, ctaDesc;
+
+  if (score >= 24) {
+    nivel = "Cardápio Estratégico";
+    nivelDesc = "Você já entende o jogo — agora é hora de afinar";
+    cor = "#4ade80";
+    itens = [
+      { icone: "✅", texto: "Você tem controle dos dados — isso já te coloca à frente de 80% dos estabelecimentos" },
+      { icone: "🎯", texto: "Sua precificação tem base técnica, mas ainda pode haver pratos com potencial não explorado" },
+      { icone: "📈", texto: "O próximo nível é cruzar popularidade com margem e usar o cardápio como ferramenta ativa de vendas" },
+      { icone: "💡", texto: "Consultores e estabelecimentos nesse nível conseguem 10–20% de aumento no ticket médio com ajustes pontuais" }
+    ];
+    ctaTitulo = "Você está perto do topo — o Kit vai te levar lá";
+    ctaDesc = "Você já tem a mentalidade certa. O Kit Cardápio Lucrativo te dá a planilha automatizada, a ficha técnica profissional e o checklist para identificar os últimos pontos de melhoria e aumentar sua margem com precisão.";
+  } else if (score >= 14) {
+    nivel = "Cardápio em Transição";
+    nivelDesc = "Você tem intuição, mas faltam dados e método";
+    cor = "#F59E0B";
+    itens = [
+      { icone: "⚠️", texto: "Você toma decisões por intuição — o que funciona até certo ponto, mas deixa dinheiro na mesa" },
+      { icone: "📊", texto: "Sem dados separados por prato, é impossível saber quais itens estão corroendo sua margem" },
+      { icone: "🍽️", texto: "Seu cardápio provavelmente tem pratos 'cavalos' que vendem muito mas lucram pouco — sem análise você não vê" },
+      { icone: "💰", texto: "Estabelecimentos nesse nível têm potencial de 20–35% de aumento de margem com o método certo" }
+    ];
+    ctaTitulo = "Você está exatamente no ponto onde o método faz mais diferença";
+    ctaDesc = "O Kit Cardápio Lucrativo foi feito para quem está nessa fase: já tem um negócio funcionando mas precisa de método para deixar de trabalhar no achismo e começar a tomar decisões baseadas em dados reais.";
+  } else {
+    nivel = "Cardápio no Escuro";
+    nivelDesc = "Você está operando sem bússola — e está perdendo dinheiro todo dia";
+    cor = "#f87171";
+    itens = [
+      { icone: "🚨", texto: "Sem controle de custo por prato, você não sabe se está lucrando ou subsidiando seus clientes sem saber" },
+      { icone: "📉", texto: "Seu cardápio provavelmente tem vários 'cães' — pratos que ninguém pede e que ainda custam caro para manter" },
+      { icone: "😰", texto: "Seus preços podem estar errados em qualquer direção — altos demais para alguns, baixos demais para outros" },
+      { icone: "💡", texto: "A boa notícia: quem está nesse nível tem o maior potencial de melhoria — com o método certo, a diferença é imediata" }
+    ];
+    ctaTitulo = "Cada dia sem método é dinheiro que não volta";
+    ctaDesc = "O Kit Cardápio Lucrativo te dá exatamente o que você precisa do zero: planilha de custo passo a passo, calculadora de preço certo, ficha técnica de cada prato e o guia completo para aplicar o método mesmo sem experiência prévia.";
+  }
+
+  document.getElementById('res-nivel-nome').textContent = nivel;
+  document.getElementById('res-nivel-nome').style.color = cor;
+  document.getElementById('res-nivel-desc').textContent = nivelDesc;
+  document.getElementById('res-barra').style.background = cor;
+
+  const itensEl = document.getElementById('res-itens');
+  itensEl.innerHTML = itens.map(i => `
+    <div class="resultado-item">
+      <span class="resultado-item-icone">${i.icone}</span>
+      <span>${i.texto}</span>
+    </div>
+  `).join('');
+
+  document.getElementById('cta-titulo').textContent = ctaTitulo;
+  document.getElementById('cta-desc').textContent = ctaDesc;
+
+  const ctaItensEl = document.getElementById('cta-itens');
+  ctaItensEl.innerHTML = [
+    "Guia: Como Ganhar Mais com o Cardápio que Você Já Tem",
+    "Planilha: Descubra Quais Pratos Estão te Dando Prejuízo",
+    "Calculadora de Preço Certo",
+    "Ficha do Prato (modelo editável)",
+    "Check: Seu Cardápio Está Vendendo Certo?"
+  ].map(i => `<div class="cta-item">${i}</div>`).join('');
+}
+
+function reiniciar() {
+  iniciarQuiz();
+}
+</script>
+</body>
+</html>
